@@ -1,4 +1,4 @@
-package com.example.restaurantflk.features.ui.nav
+package com.example.restaurantflk.features.nav
 
 import kotlinx.serialization.Serializable
 

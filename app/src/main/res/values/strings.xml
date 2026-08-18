@@ -3,4 +3,6 @@
     <string name="splash_header">¿ Tienes hambre ?</string>
     <string name="splash_subtext">Este restaurante te ofrece \nuna experiencia única</string>
     <string name="splash_btn_text">Vamos allá</string>
+    <string name="sign_in_text">Inicia sesión para continuar</string>
+    <string name="guest_text">Inicia sesión como invitado</string>
 </resources>

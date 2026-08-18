@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,14 +35,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.restaurantflk.R
+import com.example.restaurantflk.core.data.auth.GoogleUIClient
 import com.example.restaurantflk.ui.theme.BrandBrown
 import com.example.restaurantflk.ui.theme.BrandYellow
 import com.example.restaurantflk.ui.theme.TextWhite
 import com.example.restaurantflk.ui.theme.oswaldVariableFont
 import com.example.restaurantflk.ui.theme.sentientVariable
+import com.google.firebase.auth.FirebaseAuth
+import org.koin.compose.koinInject
 
 @Composable
-fun SplashScreen(){
+fun SplashScreen(
+    navigateToAuth:() -> Unit,
+    navigateToHome:() -> Unit
+){
+    val googleAuthUiClient: GoogleUIClient = koinInject()
+
     val scale = remember { Animatable(0f) }
 
     LaunchedEffect(key1 = true, block = {
@@ -87,7 +96,14 @@ fun SplashScreen(){
         )
         Spacer(modifier = Modifier.height(20.dp))
         SplashButton(
-            onClick = {}
+            onClick = {
+                val user = googleAuthUiClient.currentUser
+                if (user!=null){
+                    navigateToHome()
+                }else{
+                    navigateToAuth()
+                }
+            }
         )
     }
 }
@@ -101,7 +117,8 @@ fun SplashButton(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .clickable {onClick()},
         shape = RoundedCornerShape(99.dp),
         color = backgroundColor
     ){
