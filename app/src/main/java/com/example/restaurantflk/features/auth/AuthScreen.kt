@@ -15,7 +15,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -28,9 +31,12 @@ import com.example.restaurantflk.R
 import com.example.restaurantflk.core.data.auth.GoogleUIClient
 import com.example.restaurantflk.features.components.GoogleButton
 import com.example.restaurantflk.features.components.PrimaryButton
+import com.example.restaurantflk.features.util.RequestState
 import com.example.restaurantflk.ui.theme.FontSize
 import com.example.restaurantflk.ui.theme.oswaldVariableFont
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -46,22 +52,7 @@ fun AuthScreen(
     val authViewModel : AuthViewModel = koinViewModel()
     val googleAuthUIClient: GoogleUIClient = koinInject()
 
-    val uiEvent by authViewModel.uiEvent.collectAsStateWithLifecycle()
-
-    val loading = uiEvent is AuthUiEvent.Loading
-
-    LaunchedEffect(uiEvent) {
-        when (uiEvent) {
-            is AuthUiEvent.Success -> {
-                navigateToHome()
-                authViewModel.consumeEvent()
-            }
-            is AuthUiEvent.Error -> {
-                authViewModel.emitError((uiEvent as AuthUiEvent.Error).message)
-            }
-            else -> Unit
-        }
-    }
+    var loadingState by remember { mutableStateOf(false) }
 
     Scaffold{ paddingValues ->
         Column(
@@ -93,20 +84,30 @@ fun AuthScreen(
                 )
             }
             GoogleButton(
-                loading = loading,
+                loading = loadingState,
                 onClick = {
                     scope.launch {
-                        authViewModel.startLoading()
+                        loadingState = true
                         try {
                             val authResult = googleAuthUIClient.signInWithGoogle(activity)
                             val user = authResult.user
                             if (user != null){
-                                authViewModel.onFirebaseUserSignIn(user)
+                                authViewModel.createCustomer(
+                                    user = user,
+                                    onSuccess = {
+                                        RequestState.Success(user)
+                                    },
+                                    onError = {
+                                        RequestState.Error("No se pudo crear el cliente")
+                                    }
+                                )
+                                delay(2000)
+                                navigateToHome()
                             }else{
-                                authViewModel.emitError("No se pudo iniciar sesión con Google")
+                                RequestState.Error("No se pudo iniciar sesión con Google")
                             }
                         }catch (e: Exception){
-                            authViewModel.emitError(e.message ?: "Error al iniciar sesión")
+                            RequestState.Error(e.message ?: "Error al iniciar sesión")
                         }
                     }
                 },
@@ -119,16 +120,25 @@ fun AuthScreen(
                 onClick = {
                     scope.launch {
                         try {
-                            authViewModel.startLoading()
                             val guestResult = googleAuthUIClient.guestSignIn()
                             val user = guestResult.user
                             if (user != null){
-                                authViewModel.onFirebaseUserSignIn(user)
+                                authViewModel.createCustomer(
+                                    user = user,
+                                    onSuccess = {
+                                        RequestState.Success(user)
+                                    },
+                                    onError = {
+                                        RequestState.Error("No se pudo crear el cliente")
+                                    }
+                                )
+                                delay(2000)
+                                navigateToHome()
                             }else{
-                                authViewModel.emitError("No se pudo iniciar sesión como invitado")
+                                RequestState.Error("No se pudo iniciar sesión como invitado")
                             }
                         }catch (e: Exception){
-                            authViewModel.emitError(e.message ?: "Error al iniciar sesión como invitado")
+                            RequestState.Error(e.message ?: "Error al iniciar sesión como invitado")
                         }
                     }
                 },

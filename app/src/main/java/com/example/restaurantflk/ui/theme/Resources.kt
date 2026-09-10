@@ -27,6 +27,9 @@ object Resources {
         val Delete = R.drawable.delete
         val Warning = R.drawable.warning
         val Weight = R.drawable.weight
+        val notifications = R.drawable.notifications
+        val Heart = R.drawable.heart
+        val Gift = R.drawable.gift
     }
     object Image {
         val ShoppingCart = R.drawable.shopping_cart_image

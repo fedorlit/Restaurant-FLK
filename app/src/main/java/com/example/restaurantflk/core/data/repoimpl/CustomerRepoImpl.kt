@@ -2,9 +2,11 @@ package com.example.restaurantflk.core.data.repoimpl
 
 import com.example.restaurantflk.core.data.domain.CustomerRepository
 import com.example.restaurantflk.core.data.models.Customer
+import com.example.restaurantflk.features.util.RequestState
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
 
@@ -14,7 +16,11 @@ class CustomerRepoImpl: CustomerRepository {
         FirebaseAuth.getInstance().currentUser?.uid // obtiene el ID del usuario actual
 
 
-    override suspend fun createCustomer(user: FirebaseUser): Result<Unit> = runCatching { // runCatching para manejar excepciones
+    override suspend fun createCustomer(
+        user: FirebaseUser,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         val customerCollection = Firebase.firestore.collection("customer") // Acceder a la colección de customers
         val docRef = customerCollection.document(user.uid) //obtiene la referencia al documento del cliente
         val snapshot = docRef.get().await() //comprueba si el cliente ya existe
@@ -29,5 +35,14 @@ class CustomerRepoImpl: CustomerRepository {
             docRef.set(customer).await() //guarda los datos del cliente en la base de datos
         }
         Unit // devuelve Unit si la operación es exitosa
+    }
+
+    override suspend fun signOut(): RequestState<Unit> {
+        return try {
+            Firebase.auth.signOut()
+            RequestState.Success(Unit)
+        }catch (e: Exception){
+            RequestState.Error("Error cerrando sesión: ${e.message}")
+        }
     }
 }
