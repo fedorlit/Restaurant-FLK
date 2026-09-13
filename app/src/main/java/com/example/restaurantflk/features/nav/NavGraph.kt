@@ -7,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.restaurantflk.features.splash.SplashScreen
 import com.example.restaurantflk.features.auth.AuthScreen
 import com.example.restaurantflk.features.home.HomeScreen
+import com.example.restaurantflk.features.profile.ProfileScreen
 
 @Composable
 fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
@@ -55,6 +56,17 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                             inclusive = true
                         }
                     }
+                },
+                navigateToProfile = {
+                    navController.navigate(Screens.Profile)
+                }
+            )
+        }
+
+        composable<Screens.Profile>{
+            ProfileScreen(
+                navigateBack = {
+                    navController.navigateUp()
                 }
             )
         }
