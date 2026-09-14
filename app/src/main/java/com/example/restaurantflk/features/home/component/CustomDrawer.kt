@@ -3,7 +3,6 @@ package com.example.restaurantflk.features.home.component
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,12 +29,12 @@ import com.example.restaurantflk.ui.theme.oswaldVariableFont
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun CustomDrawer (
+fun CustomDrawer(
     onProfileClick: () -> Unit,
     onContactUsClick: () -> Unit,
     onSignOutClick: () -> Unit,
     onAdminPanelClick: () -> Unit,
-    ){
+) {
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
 
@@ -46,36 +45,45 @@ fun CustomDrawer (
             .padding(12.dp)
     ) {
         Spacer(modifier = Modifier.height(50.dp))
+
         AsyncImage(
             model = currentUser?.photoUrl ?: "Unknown",
             contentDescription = "Profile picture",
             modifier = Modifier
+                .padding(start = 28.dp)
                 .size(120.dp)
                 .clip(CircleShape),
             contentScale = ContentScale.Crop,
             fallback = painterResource(R.drawable.user)
         )
+
         Spacer(modifier = Modifier.height(8.dp))
+
         Text(
-            text = "Bienvenido ${currentUser?.displayName?.split(" ")?.firstOrNull()?: "User"}",
+            text = "Bienvenido ${currentUser?.displayName?.split(" ")?.firstOrNull() ?: "User"}",
+            modifier = Modifier.padding(start = 32.dp),
             fontFamily = oswaldVariableFont(),
             fontSize = FontSize.EXTRA_REGULAR,
             fontWeight = FontWeight.Medium,
             color = TextBrand
         )
-        HorizontalDivider(modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .padding(top = 8.dp, end = 12.dp)
-            .clip(RoundedCornerShape(99.dp)),
+
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(start = 10.dp, top = 8.dp, end = 12.dp)
+                .clip(RoundedCornerShape(99.dp)),
             thickness = 2.dp,
             color = Color.Black
         )
+
         Spacer(modifier = Modifier.height(30.dp))
-        DrawerItem.entries.take(6).forEach{item ->
+
+        DrawerItem.entries.take(6).forEach { item ->
             DrawerItemCard(
                 drawerItem = item,
                 onClick = {
-                    when (item){
+                    when (item) {
                         DrawerItem.Profile -> onProfileClick()
                         DrawerItem.ContactUs -> onContactUsClick()
                         DrawerItem.SignOut -> onSignOutClick()
@@ -85,7 +93,9 @@ fun CustomDrawer (
             )
             Spacer(modifier = Modifier.height(4.dp))
         }
+
         Spacer(modifier = Modifier.weight(1f))
+
         DrawerItemCard(
             drawerItem = DrawerItem.AdminPanel,
             onClick = onAdminPanelClick

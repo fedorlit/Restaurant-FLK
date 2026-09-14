@@ -1,6 +1,7 @@
 package com.example.restaurantflk.core.data.repoimpl
 
 import com.example.restaurantflk.core.data.domain.CustomerRepository
+import com.example.restaurantflk.core.data.models.Country
 import com.example.restaurantflk.core.data.models.Customer
 import com.example.restaurantflk.core.data.models.PhoneNumber
 import com.example.restaurantflk.features.util.RequestState
@@ -32,14 +33,14 @@ class CustomerRepoImpl: CustomerRepository {
             val snapshot = docRef.get().await() //comprueba si el cliente ya existe
 
             if (!snapshot.exists()) { // si el cliente no existe, crea un nuevo documento
-                val customer = Customer(
-                    id = user.uid,
-                    firstName = user.displayName?.split(" ")?.firstOrNull() ?: "Unknown",
-                    lastName = user.displayName?.split(" ")?.lastOrNull() ?: "Unknown",
-                    email = user.email ?: "Unknown",
-                    profilePictureUrl = user.photoUrl.toString()
+                val customerMap = mapOf(
+                    "id" to user.uid,
+                    "firstName" to (user.displayName?.split(" ")?.firstOrNull() ?: "Unknown"),
+                    "lastName" to (user.displayName?.split(" ")?.lastOrNull() ?: "Unknown"),
+                    "email" to (user.email ?: "Unknown"),
+                    "photoUrl" to user.photoUrl.toString()
                 )
-                docRef.set(customer).await() //guarda los datos del cliente en la base de datos
+                docRef.set(customerMap).await() //guarda los datos del cliente en la base de datos
             }
             onSuccess()
         }catch (e: Exception){
@@ -72,6 +73,25 @@ class CustomerRepoImpl: CustomerRepository {
                                     null
                                 }
                             }
+
+                            val countryMap = documentSnapshot.get("country") as? Map<*, *>
+                            val country = countryMap?.let { map ->
+                                val name = map["name"] as? String
+                                val code = map["code"] as? String
+                                val dialCode = (map["dialCode"] as? Long)?.toInt()
+                                val flagUrl = map["flagUrl"] as? String
+                                if(name !=null && code != null && dialCode != null && flagUrl != null){
+                                    Country(
+                                        name = name,
+                                        code = code,
+                                        dialCode = dialCode,
+                                        flagUrl = flagUrl
+                                    )
+                                }else{
+                                    null
+                                }
+                            }
+
                             val customer = Customer(
                                 id = documentSnapshot.id,
                                 firstName = documentSnapshot.get("firstName") as String,
@@ -81,6 +101,7 @@ class CustomerRepoImpl: CustomerRepository {
                                 postalCode = postalCode,
                                 phoneNumber = phoneNumber,
                                 address = documentSnapshot.get("address") as String?,
+                                country = country,
                                 profilePictureUrl = documentSnapshot.get("photoUrl") as String?
                             )
                             send(RequestState.Success(data = customer))
@@ -116,6 +137,16 @@ class CustomerRepoImpl: CustomerRepository {
                             "number" to it.number
                         )
                     }
+
+                    val countryMap = customer.country?.let {
+                        mapOf(
+                            "name" to it.name,
+                            "code" to it.code,
+                            "dialCode" to it.dialCode,
+                            "flagUrl" to it.flagUrl
+                        )
+                    }
+
                     customerCollection
                         .document(customer.id)
                         .update(
@@ -125,7 +156,9 @@ class CustomerRepoImpl: CustomerRepository {
                                 "city" to customer.city,
                                 "postalCode" to customer.postalCode,
                                 "address" to customer.address,
-                                "phoneNumber" to phoneNumberMap
+                                "phoneNumber" to phoneNumberMap,
+                                "country" to countryMap,
+                                "photoUrl" to customer.profilePictureUrl
                             )
                         ).await()
                     onSuccess()
@@ -139,6 +172,7 @@ class CustomerRepoImpl: CustomerRepository {
             onError("Error actualizando cliente: ${e.message}")
         }
     }
+
 
     override suspend fun signOut(): RequestState<Unit> {
         return try {
