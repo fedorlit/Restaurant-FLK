@@ -60,7 +60,8 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     navigateToAuth: () -> Unit,
-    navigateToProfile: () -> Unit
+    navigateToProfile: () -> Unit,
+    navigateToAdminPanel: () -> Unit
 ){
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState()
@@ -110,16 +111,16 @@ fun HomeScreen(
             onSignOutClick = {
                 viewModel.signOut(
                     onSuccess = navigateToAuth,
-                    onError = {
+                    onError = { error: String ->
                         Toast.makeText(
                             context,
-                            "Error cerrando sesión: $it",
+                            "Error cerrando sesión: $error",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                 )
             },
-            onAdminPanelClick = {  }
+            onAdminPanelClick = navigateToAdminPanel
         )
         Box(
             modifier = Modifier

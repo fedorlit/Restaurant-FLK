@@ -28,4 +28,12 @@ sealed class Screens {
 
     @Serializable
     data object Profile : Screens()
+
+    @Serializable
+    data object AdminPanel : Screens()
+
+    @Serializable
+    data class ManageProduct(
+        val id: String? = null
+    ) : Screens()
 }

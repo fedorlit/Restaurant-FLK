@@ -4,6 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.example.restaurantflk.features.admin_panel.AdminPanelScreen
+import com.example.restaurantflk.features.admin_panel.manage_product.ManageProductScreen
 import com.example.restaurantflk.features.splash.SplashScreen
 import com.example.restaurantflk.features.auth.AuthScreen
 import com.example.restaurantflk.features.home.HomeScreen
@@ -59,6 +62,9 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                 },
                 navigateToProfile = {
                     navController.navigate(Screens.Profile)
+                },
+                navigateToAdminPanel = {
+                    navController.navigate(Screens.AdminPanel)
                 }
             )
         }
@@ -70,5 +76,27 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                 }
             )
         }
+
+        composable<Screens.AdminPanel>{
+            AdminPanelScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                },
+                navigateToManageProduct = { id ->
+                    navController.navigate(Screens.ManageProduct(id=id))
+                }
+            )
+        }
+
+        composable<Screens.ManageProduct>{
+            val id = it.toRoute<Screens.ManageProduct>().id
+            ManageProductScreen(
+                id = id,
+                navigateBack = {
+                    navController.navigateUp()
+                }
+            )
+        }
+
     }
 }

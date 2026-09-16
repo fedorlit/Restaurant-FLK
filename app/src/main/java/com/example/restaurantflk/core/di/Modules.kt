@@ -2,16 +2,19 @@ package com.example.restaurantflk.core.di
 
 import com.example.restaurantflk.R
 import com.example.restaurantflk.core.data.auth.GoogleUIClient
+import com.example.restaurantflk.core.data.domain.AdminRepository
 import com.example.restaurantflk.core.data.domain.CountryRepository
 import com.example.restaurantflk.core.data.domain.CountryRepositoryImpl
 import com.example.restaurantflk.core.data.domain.CustomerRepository
 import com.example.restaurantflk.core.data.remote.RestCountriesApi
+import com.example.restaurantflk.core.data.repoimpl.AdminRepoImpl
 import com.example.restaurantflk.core.data.repoimpl.CustomerRepoImpl
+import com.example.restaurantflk.features.admin_panel.AdminPanelViewModel
+import com.example.restaurantflk.features.admin_panel.manage_product.ManageProductViewModel
 import com.example.restaurantflk.features.auth.AuthViewModel
 import com.example.restaurantflk.features.home.HomeViewModel
 import com.example.restaurantflk.features.profile.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -19,6 +22,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
 
 val appModule = module {
@@ -47,10 +51,13 @@ val appModule = module {
     single<FirebaseAuth>{ FirebaseAuth.getInstance() }
 
     single<CustomerRepository>{ CustomerRepoImpl() }
+    single<AdminRepository>{ AdminRepoImpl() }
 
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
     viewModel { ProfileViewModel(get(), get()) }
+    viewModel { ManageProductViewModel(get()) }
+    viewModel { AdminPanelViewModel(get()) }
 
     single{
         GoogleUIClient(

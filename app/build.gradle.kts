@@ -3,96 +3,196 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.serialization)
-//    alias(libs.plugins.google.services)
+
     id("com.google.devtools.ksp")
+
     alias(libs.plugins.google.gms.google.services)
 }
 
 android {
     namespace = "com.example.restaurantflk"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.restaurantflk"
+
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
+
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
+
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
+                getDefaultProguardFile(
+                    "proguard-android-optimize.txt"
+                ),
                 "proguard-rules.pro"
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 }
 
 dependencies {
 
+    implementation(libs.androidx.compose.foundation)
+    // =========================================================
+    // ANDROID
+    // =========================================================
+
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+
+    // =========================================================
+    // COMPOSE
+    // =========================================================
+
     implementation(platform(libs.androidx.compose.bom))
+
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+
+    debugImplementation(libs.androidx.compose.ui.tooling)
+
+
+    // =========================================================
+    // NAVIGATION
+    // =========================================================
+
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
-    implementation(libs.googleid)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 
 
-    // Koin
+    // =========================================================
+    // SERIALIZATION
+    // =========================================================
+
+    implementation(libs.kotlinx.serialization.json)
+
+
+    // =========================================================
+    // KOIN
+    // =========================================================
+
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
-    implementation(libs.koin.androidx.compose.navigation)
-
-    // Koin Annotations and ksp compiler
     implementation(libs.koin.annotations)
+
     ksp(libs.koin.ksp.compiler)
 
-    // Kotlinx serialization
-    implementation(libs.kotlinx.serialization)
 
-    // Coil
-    implementation(libs.coil3)
-    implementation(libs.coil3.compose)
-    implementation(libs.coil3.compose.core)
-    implementation(libs.coil3.network.ktor)
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
+    // =========================================================
+    // ROOM
+    // =========================================================
 
-    // Coroutines
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+
+    ksp(libs.androidx.room.compiler)
+
+
+    // =========================================================
+    // DATASTORE
+    // =========================================================
+
+    implementation(libs.androidx.datastore.preferences)
+
+
+    // =========================================================
+    // COIL 3
+    // =========================================================
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
+
+    // =========================================================
+    // RETROFIT
+    // =========================================================
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+
+
+    // =========================================================
+    // OKHTTP
+    // =========================================================
+
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+
+
+    // =========================================================
+    // FIREBASE
+    // =========================================================
+
+    implementation(platform(libs.firebase.bom))
+
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
+
+
+    // =========================================================
+    // GOOGLE SIGN-IN / CREDENTIAL MANAGER
+    // =========================================================
+
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
+
+    // =========================================================
+    // COROUTINES
+    // =========================================================
+
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
 
-    //Retrofit
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.okhttp3:okhttp:5.2.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+
+    // =========================================================
+    // TESTS
+    // =========================================================
+
+    testImplementation(libs.junit)
+
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+
+    androidTestImplementation(
+        platform(libs.androidx.compose.bom)
+    )
 }

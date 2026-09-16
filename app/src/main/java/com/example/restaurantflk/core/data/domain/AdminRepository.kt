@@ -1,0 +1,24 @@
+package com.example.restaurantflk.core.data.domain
+
+import android.net.Uri
+import com.example.restaurantflk.core.data.models.Product
+import com.example.restaurantflk.features.util.RequestState
+import kotlinx.coroutines.flow.Flow
+
+interface AdminRepository {
+    fun getCurrentUserId(): String?
+
+    suspend fun uploadProductImageToStorage(imageUri: Uri): Result<String>
+    suspend fun deleteProductImageFromStorage(downloadUrl: String): Result<Unit>
+
+    suspend fun createNewProdcut(product: Product)
+
+    suspend fun updateProductThumbnail(
+        productId: String,
+        downloadUrl: String
+    ): Result<Unit>
+
+    fun readLastTenProducts(): Flow<RequestState<List<Product>>>
+
+    suspend fun readProductById(id: String): RequestState<Product>
+}

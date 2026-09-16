@@ -98,9 +98,9 @@ fun ProfileScreen(
             if (countryDialogOpen) {
                 countriesState.DisplayResult(
                     onLoading = { LoadingCard(modifier = Modifier.fillMaxSize()) },
-                    onSuccess = { countries ->
+                    onSuccess = { countriesList ->
                         CountryPickerDialog(
-                            countries = countries,
+                            countries = countriesList,
                             selectedCountry = screenState.country,
                             onDismiss = { countryDialogOpen = false },
                             onConfirmClick = { selectedCountry ->
@@ -120,7 +120,7 @@ fun ProfileScreen(
             }
             screenReady.DisplayResult(
                 onLoading = { LoadingCard(modifier = Modifier.fillMaxSize()) },
-                onSuccess = {
+                onSuccess = { _ ->
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -156,15 +156,13 @@ fun ProfileScreen(
                             onClick = {
                                 profileViewModel.updateCustomer(
                                     onSuccess = {
-                                        RequestState.Success("Datos actualizados")
                                         Toast.makeText(
                                             context,
                                             "Datos actualizados",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     },
-                                    onError = { message ->
-                                        RequestState.Error("Error actualizando datos: $message")
+                                    onError = { message: String ->
                                         Toast.makeText(
                                             context,
                                             "Error actualizando datos: $message",

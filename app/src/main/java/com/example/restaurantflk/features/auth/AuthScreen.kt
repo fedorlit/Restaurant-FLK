@@ -95,10 +95,10 @@ fun AuthScreen(
                                 authViewModel.createCustomer(
                                     user = user,
                                     onSuccess = {
-                                        RequestState.Success(user)
+                                        // Éxito
                                     },
-                                    onError = {
-                                        RequestState.Error("No se pudo crear el cliente")
+                                    onError = { error: String ->
+                                        // Manejar error
                                     }
                                 )
                                 delay(2000)
@@ -126,10 +126,10 @@ fun AuthScreen(
                                 authViewModel.createCustomer(
                                     user = user,
                                     onSuccess = {
-                                        RequestState.Success(user)
+                                        // Éxito
                                     },
-                                    onError = {
-                                        RequestState.Error("No se pudo crear el cliente")
+                                    onError = { error: String ->
+                                        // Manejar error
                                     }
                                 )
                                 delay(2000)
