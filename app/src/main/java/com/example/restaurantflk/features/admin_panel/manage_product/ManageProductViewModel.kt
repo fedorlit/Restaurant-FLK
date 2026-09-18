@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.restaurantflk.core.data.domain.AdminRepository
@@ -14,9 +15,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 data class ManageProductState(
     val id: String = UUID.randomUUID().toString(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val title: String = "",
     val description: String = "",
     val selectedCategory: ProductCategory? = null,
@@ -26,12 +31,19 @@ data class ManageProductState(
     val energyValue: Int? = null,
     val allergyAdvice: String = "",
     val ingredients: String = "",
-    val price: Double = 0.0
+    val price: Double = 0.0,
+    val isNew: Boolean = false,
+    val isPopular: Boolean = false,
+    val isDiscounted: Boolean = false
 )
 
 class ManageProductViewModel(
-    private val adminRepository: AdminRepository
+    private val adminRepository: AdminRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val productId = savedStateHandle.get<String>("id") ?: ""
+    private var originalProduct: Product? = null
     var screenState by mutableStateOf(ManageProductState())
         private set
     var imageUploaderState: RequestState<Unit> by mutableStateOf(RequestState.Idle)
@@ -39,6 +51,9 @@ class ManageProductViewModel(
 
     private val _createProductState = MutableStateFlow<RequestState<Unit>>(RequestState.Idle)
     val createProductState = _createProductState.asStateFlow()
+
+    private val _deleteProductState = MutableStateFlow<RequestState<Unit>>(RequestState.Idle)
+    val deleteProductState = _deleteProductState.asStateFlow()
 
     val isFormValid: Boolean
         get() = screenState.title.isNotEmpty() &&
@@ -51,45 +66,78 @@ class ManageProductViewModel(
         screenState = screenState.copy(
             allCategories = ProductCategory.entries
         )
+        if (productId.isNotEmpty()) {
+            viewModelScope.launch {
+                when (val result = adminRepository.readProductById(productId)) {
+                    is RequestState.Success -> {
+                        val product = result.data
+                        originalProduct = product
+                        screenState = screenState.copy(
+                            id = product.id,
+                            title = product.title,
+                            description = product.description,
+                            productImage = product.productImage,
+                            selectedCategory = mapCategory(product.category),
+                            allergyAdvice = product.allergyAdvice,
+                            ingredients = product.ingredients,
+                            energyValue = product.energyValue,
+                            price = product.price,
+                            isNew = product.isNew,
+                            isPopular = product.isPopular,
+                            isDiscounted = product.isDiscounted
+                        )
+                        updateImageState(RequestState.Success(Unit))
+                    }
+
+                    is RequestState.Error -> {}
+                    else -> Unit
+                }
+            }
+        }
     }
 
-    private fun mapCategory(categoryTitle: String): ProductCategory?{
-        return ProductCategory.entries.firstOrNull(){
+    private fun mapCategory(categoryTitle: String): ProductCategory? {
+        return ProductCategory.entries.firstOrNull() {
             it.title.equals(categoryTitle, ignoreCase = true)
         }
     }
 
-    fun onCategoryFieldClick(){
+    fun onCategoryFieldClick() {
         screenState = screenState.copy(isCategoryDialogOpen = true)
     }
 
-    fun onCategoryDialogDismiss(){
+    fun onCategoryDialogDismiss() {
         screenState = screenState.copy(isCategoryDialogOpen = false)
     }
 
-    fun onCategorySelected(category: ProductCategory){
+    fun onCategorySelected(category: ProductCategory) {
         screenState = screenState.copy(
             selectedCategory = category,
             isCategoryDialogOpen = false
         )
     }
 
-    fun updateTitle(value: String){
+    fun updateTitle(value: String) {
         screenState = screenState.copy(title = value)
     }
-    fun updateDescription(value: String){
+
+    fun updateDescription(value: String) {
         screenState = screenState.copy(description = value)
     }
-    fun updateAllergyAdvice(value: String){
+
+    fun updateAllergyAdvice(value: String) {
         screenState = screenState.copy(allergyAdvice = value)
     }
-    fun updateIngredients(value: String){
+
+    fun updateIngredients(value: String) {
         screenState = screenState.copy(ingredients = value)
     }
-    fun updatePrice(value: Double){
+
+    fun updatePrice(value: Double) {
         screenState = screenState.copy(price = value)
     }
-    fun updateEnergyValue(value: Int?){
+
+    fun updateEnergyValue(value: Int?) {
         screenState = screenState.copy(energyValue = value)
     }
 
@@ -101,6 +149,16 @@ class ManageProductViewModel(
         screenState = screenState.copy(productImage = value)
     }
 
+    fun updateIsNew(value: Boolean){
+        screenState = screenState.copy(isNew = value)
+    }
+
+    fun updateIsPopular(value: Boolean){
+        screenState = screenState.copy(isPopular = value)
+    }
+    fun updateIsDiscounted(value: Boolean){
+        screenState = screenState.copy(isDiscounted = value)
+    }
     fun uploadProductImageToStorage(imageUri: Uri?) {
         if (imageUri == null) {
             updateImageState(RequestState.Error("No se seleccionó una imagen"))
@@ -140,13 +198,13 @@ class ManageProductViewModel(
                 updateImageState(RequestState.Idle)
             }.onFailure { throwable ->
                 val message = throwable.message ?: "Error al eliminar la imagen"
-                onResult(false,message)
+                onResult(false, message)
             }
         }
     }
 
-    fun createNewProduct(){
-        if (!isFormValid){
+    fun createNewProduct() {
+        if (!isFormValid) {
             _createProductState.value = RequestState.Error("Por favor completa todos los campos")
             return
         }
@@ -156,6 +214,7 @@ class ManageProductViewModel(
 
                 val productToCreate = Product(
                     id = screenState.id,
+                    createdAt = screenState.createdAt,
                     title = screenState.title,
                     description = screenState.description,
                     category = screenState.selectedCategory!!.title,
@@ -163,19 +222,76 @@ class ManageProductViewModel(
                     energyValue = screenState.energyValue,
                     ingredients = screenState.ingredients,
                     price = screenState.price,
-                    productImage = screenState.productImage
+                    productImage = screenState.productImage,
+                    isNew = screenState.isNew,
+                    isPopular = screenState.isPopular,
+                    isDiscounted = screenState.isDiscounted
                 )
                 adminRepository.createNewProdcut(productToCreate)
                 _createProductState.value = RequestState.Success(Unit)
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 val message = e.message ?: "Error al crear el producto"
                 _createProductState.value = RequestState.Error(message)
             }
         }
     }
 
-    fun resetCreateProductState(){
+    fun resetCreateProductState() {
         _createProductState.value = RequestState.Idle
     }
 
+    fun updateProductDetails() {
+        viewModelScope.launch {
+            _createProductState.value = RequestState.Loading
+
+            val base = originalProduct
+            if (base == null) {
+                _createProductState.value =
+                    RequestState.Error("Producto no encontrado para actualizar")
+                return@launch
+            }
+
+            val updatedProduct = base.copy(
+                id = screenState.id,
+                createdAt = screenState.createdAt,
+                title = screenState.title,
+                description = screenState.description,
+                productImage = screenState.productImage,
+                category = screenState.selectedCategory?.title ?: base.category,
+                allergyAdvice = screenState.allergyAdvice,
+                ingredients = screenState.ingredients,
+                energyValue = screenState.energyValue,
+                price = screenState.price,
+                isNew = screenState.isNew,
+                isPopular = screenState.isPopular,
+                isDiscounted = screenState.isDiscounted
+            )
+            val result = adminRepository.updateProduct(updatedProduct)
+
+            result.onSuccess {
+                _createProductState.value = RequestState.Success(Unit)
+            }.onFailure { throwable ->
+                val message = throwable.message ?: "Error al actualizar el producto"
+                _createProductState.value = RequestState.Error(message)
+            }
+        }
+
+    }
+    fun deleteProduct(productId: String) {
+        viewModelScope.launch {
+            _deleteProductState.value = RequestState.Loading
+            val result = adminRepository.deleteProduct(productId)
+            result
+                .onSuccess {
+                    _deleteProductState.value = RequestState.Success(Unit)
+                }
+                .onFailure { throwable ->
+                    val message = throwable.message ?: "Error al eliminar el producto"
+                    _deleteProductState.value = RequestState.Error(message)
+                }
+        }
+    }
+    fun resetDeleteProductState(){
+        _deleteProductState.value = RequestState.Idle
+    }
 }

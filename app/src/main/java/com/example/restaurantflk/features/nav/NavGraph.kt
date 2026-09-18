@@ -31,7 +31,7 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                 },
                 navigateToHome = {
                     navController.navigate(Screens.HomeGraph){
-                        popUpTo<Screens.AuthScreen>{
+                        popUpTo<Screens.SplashScreen>{
                             inclusive = true
                         }
                     }
@@ -97,6 +97,6 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                 }
             )
         }
-
+        
     }
 }

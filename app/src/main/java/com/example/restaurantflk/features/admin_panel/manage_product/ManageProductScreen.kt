@@ -53,6 +53,11 @@ import com.example.restaurantflk.ui.theme.oswaldVariableFont
 import org.koin.androidx.compose.koinViewModel
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -67,6 +72,8 @@ import com.example.restaurantflk.features.util.DisplayResult
 import com.example.restaurantflk.features.util.MessageUtils
 import com.example.restaurantflk.features.util.RequestState
 import com.example.restaurantflk.ui.theme.ButtonPrimary
+import com.example.restaurantflk.ui.theme.SurfaceBrand
+import com.example.restaurantflk.ui.theme.SurfaceDarker
 import com.example.restaurantflk.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,6 +87,8 @@ fun ManageProductScreen(
     var showToast by remember { mutableStateOf("") }
     val isFormValid = viewModel.isFormValid
     val createProductState by viewModel.createProductState.collectAsState()
+    var dropDownMenuOpened by remember { mutableStateOf(false) }
+    val deleteProductState by viewModel.deleteProductState.collectAsState()
 
     MessageUtils.ShowToast(message = showToast)
     val context = LocalContext.current
@@ -88,8 +97,8 @@ fun ManageProductScreen(
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
-        onResult = { uri : Uri? ->
-             viewModel.uploadProductImageToStorage(uri)
+        onResult = { uri: Uri? ->
+            viewModel.uploadProductImageToStorage(uri)
         }
     )
     LaunchedEffect(createProductState) {
@@ -98,10 +107,22 @@ fun ManageProductScreen(
             viewModel.resetCreateProductState()
             navigateBack()
         }
-        if(createProductState.isError()){
+        if (createProductState.isError()) {
             showToast = createProductState.getErrorMessage()
         }
     }
+
+    LaunchedEffect(deleteProductState) {
+        if (deleteProductState.isSuccess()) {
+            showToast = "Producto eliminado exitosamente"
+            viewModel.resetDeleteProductState()
+            navigateBack()
+        }
+        if (deleteProductState.isError()) {
+            showToast = deleteProductState.getErrorMessage()
+        }
+    }
+
 
     AnimatedVisibility(
         visible = screenState.isCategoryDialogOpen
@@ -131,6 +152,42 @@ fun ManageProductScreen(
                             contentDescription = "Back arrow icon",
                             tint = IconPrimary
                         )
+                    }
+                },
+                actions = {
+                    id.takeIf { it != null }?.let {
+                        Box {
+                            IconButton(
+                                onClick = { dropDownMenuOpened = true }
+                            ) {
+                                Icon(
+                                    painter = painterResource(Resources.Icon.VerticalMenu),
+                                    contentDescription = "Vertical menu icon",
+                                    tint = IconPrimary
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = dropDownMenuOpened,
+                                onDismissRequest = { dropDownMenuOpened = false }
+
+                            ) {
+                                DropdownMenuItem(
+                                    leadingIcon = {
+                                        Icon(
+                                            modifier = Modifier.size(14.dp),
+                                            painter = painterResource(Resources.Icon.Delete),
+                                            contentDescription = "Delete icon",
+                                            tint = IconPrimary
+                                        )
+                                    },
+                                    text = { Text(text = "Eliminar", color = TextPrimary) },
+                                    onClick = {
+                                        dropDownMenuOpened = false
+                                        viewModel.deleteProduct(productId = screenState.id)
+                                    }
+                                )
+                            }
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -168,8 +225,8 @@ fun ManageProductScreen(
                         )
                         .clickable(
                             enabled = productImageUploadState.isIdle()
-                        ){
-                            if(!productImageUploadState.isLoading()){
+                        ) {
+                            if (!productImageUploadState.isLoading()) {
                                 imagePickerLauncher.launch("image/*")
                             }
                         }
@@ -194,7 +251,7 @@ fun ManageProductScreen(
                                 contentAlignment = Alignment.TopEnd
                             ) {
                                 AsyncImage(
-                                    model= ImageRequest.Builder(
+                                    model = ImageRequest.Builder(
                                         context
                                     ).data(screenState.productImage)
                                         .crossfade(enable = true)
@@ -211,14 +268,14 @@ fun ManageProductScreen(
                                         )
                                         .clip(RoundedCornerShape(6.dp))
                                         .background(ButtonPrimary)
-                                        .clickable{
-                                            viewModel.deleteProductImageFromStorage{ isSuccess, message ->
+                                        .clickable {
+                                            viewModel.deleteProductImageFromStorage { isSuccess, message ->
                                                 showToast = message
                                             }
                                         }
                                         .padding(12.dp),
                                     contentAlignment = Alignment.Center
-                                ){
+                                ) {
                                     Icon(
                                         modifier = Modifier.size(24.dp),
                                         painter = painterResource(Resources.Icon.Delete),
@@ -274,7 +331,7 @@ fun ManageProductScreen(
                 )
                 BurgerTextField(
                     value = "${screenState.energyValue ?: ""}",
-                    onValueChange = {viewModel.updateEnergyValue(it.toIntOrNull() ?: 0)},
+                    onValueChange = { viewModel.updateEnergyValue(it.toIntOrNull() ?: 0) },
                     placeholder = "Valor energético",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number
@@ -296,9 +353,9 @@ fun ManageProductScreen(
                 )
                 BurgerTextField(
                     value = if (screenState.price == 0.0) ""
-                            else "${screenState.price}",
-                    onValueChange = {value ->
-                        if(value.isEmpty() || value.toDoubleOrNull() != null){
+                    else "${screenState.price}",
+                    onValueChange = { value ->
+                        if (value.isEmpty() || value.toDoubleOrNull() != null) {
                             viewModel.updatePrice(value.toDoubleOrNull() ?: 0.0)
                         }
                     },
@@ -308,16 +365,97 @@ fun ManageProductScreen(
                         keyboardType = KeyboardType.Number
                     )
                 )
+                Column (
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ){
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(start = 12.dp),
+                            text = "Nuevo",
+                            fontSize = FontSize.REGULAR,
+                            color = TextPrimary
+                        )
+                        Switch(
+                            checked = screenState.isNew,
+                            onCheckedChange = viewModel::updateIsNew,
+                            colors = SwitchDefaults.colors(
+                                checkedTrackColor = SurfaceBrand,
+                                uncheckedTrackColor = SurfaceDarker,
+                                uncheckedThumbColor = Surface,
+                                checkedThumbColor = Surface,
+                                uncheckedBorderColor = SurfaceDarker,
+                                checkedBorderColor = SurfaceBrand
+                            )
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(start = 12.dp),
+                            text = "Descuento",
+                            fontSize = FontSize.REGULAR,
+                            color = TextPrimary
+                        )
+                        Switch(
+                            checked = screenState.isDiscounted,
+                            onCheckedChange = viewModel::updateIsDiscounted,
+                            colors = SwitchDefaults.colors(
+                                checkedTrackColor = SurfaceBrand,
+                                uncheckedTrackColor = SurfaceDarker,
+                                uncheckedThumbColor = Surface,
+                                checkedThumbColor = Surface,
+                                uncheckedBorderColor = SurfaceDarker,
+                                checkedBorderColor = SurfaceBrand
+                            )
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(start = 12.dp),
+                            text = "Popular",
+                            fontSize = FontSize.REGULAR,
+                            color = TextPrimary
+                        )
+                        Switch(
+                            checked = screenState.isPopular,
+                            onCheckedChange = viewModel::updateIsPopular,
+                            colors = SwitchDefaults.colors(
+                                checkedTrackColor = SurfaceBrand,
+                                uncheckedTrackColor = SurfaceDarker,
+                                uncheckedThumbColor = Surface,
+                                checkedThumbColor = Surface,
+                                uncheckedBorderColor = SurfaceDarker,
+                                checkedBorderColor = SurfaceBrand
+                            )
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
             PrimaryButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = if (id == null) "Añadir producto" else "Actualizar producto",
-                icon = if(id == null) painterResource(Resources.Icon.Plus)
+                icon = if (id == null) painterResource(Resources.Icon.Plus)
                 else painterResource(Resources.Icon.Checkmark),
                 enabled = isFormValid && !createProductState.isLoading(),
                 onClick = {
-                    viewModel.createNewProduct()
+                    if (id != null) {
+                        viewModel.updateProductDetails()
+                    } else {
+                        viewModel.createNewProduct()
+                    }
                 }
             )
         }

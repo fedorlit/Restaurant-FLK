@@ -6,13 +6,16 @@ import com.example.restaurantflk.core.data.domain.AdminRepository
 import com.example.restaurantflk.core.data.domain.CountryRepository
 import com.example.restaurantflk.core.data.domain.CountryRepositoryImpl
 import com.example.restaurantflk.core.data.domain.CustomerRepository
+import com.example.restaurantflk.core.data.domain.ProductRepository
 import com.example.restaurantflk.core.data.remote.RestCountriesApi
 import com.example.restaurantflk.core.data.repoimpl.AdminRepoImpl
 import com.example.restaurantflk.core.data.repoimpl.CustomerRepoImpl
+import com.example.restaurantflk.core.data.repoimpl.ProductRepoImpl
 import com.example.restaurantflk.features.admin_panel.AdminPanelViewModel
 import com.example.restaurantflk.features.admin_panel.manage_product.ManageProductViewModel
 import com.example.restaurantflk.features.auth.AuthViewModel
 import com.example.restaurantflk.features.home.HomeViewModel
+import com.example.restaurantflk.features.home.product_overview.ProductOverviewViewModel
 import com.example.restaurantflk.features.profile.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.serialization.json.Json
@@ -52,12 +55,14 @@ val appModule = module {
 
     single<CustomerRepository>{ CustomerRepoImpl() }
     single<AdminRepository>{ AdminRepoImpl() }
+    single<ProductRepository>{ ProductRepoImpl() }
 
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
     viewModel { ProfileViewModel(get(), get()) }
-    viewModel { ManageProductViewModel(get()) }
+    viewModel { ManageProductViewModel(get(), get())}
     viewModel { AdminPanelViewModel(get()) }
+    viewModel{ ProductOverviewViewModel(get()) }
 
     single{
         GoogleUIClient(

@@ -34,6 +34,7 @@ fun CustomDrawer(
     onContactUsClick: () -> Unit,
     onSignOutClick: () -> Unit,
     onAdminPanelClick: () -> Unit,
+    isAdmin: Boolean
 ) {
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
@@ -96,10 +97,12 @@ fun CustomDrawer(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        DrawerItemCard(
-            drawerItem = DrawerItem.AdminPanel,
-            onClick = onAdminPanelClick
-        )
+        if(isAdmin){
+            DrawerItemCard(
+                drawerItem = DrawerItem.AdminPanel,
+                onClick = onAdminPanelClick
+            )
+        }
         Spacer(modifier = Modifier.height(24.dp))
     }
 }

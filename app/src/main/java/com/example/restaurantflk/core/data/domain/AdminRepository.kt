@@ -21,4 +21,9 @@ interface AdminRepository {
     fun readLastTenProducts(): Flow<RequestState<List<Product>>>
 
     suspend fun readProductById(id: String): RequestState<Product>
+
+    suspend fun updateProduct(product: Product): Result<Unit>
+    suspend fun deleteProduct(productId: String): Result<Unit>
+
+    fun searchProductByTitle(searchQuery: String): Flow<RequestState<List<Product>>>
 }

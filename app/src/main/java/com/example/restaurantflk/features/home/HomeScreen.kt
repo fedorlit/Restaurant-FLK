@@ -1,5 +1,6 @@
 package com.example.restaurantflk.features.home
 
+import android.content.res.Resources
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -23,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.restaurantflk.R
 import com.example.restaurantflk.features.home.component.BottomBar
 import com.example.restaurantflk.features.home.component.CustomDrawer
+import com.example.restaurantflk.features.home.product_overview.ProductOverviewScreen
 import com.example.restaurantflk.features.home.domain.BottomBarDestinations
 import com.example.restaurantflk.features.home.domain.CustomDrawerState
 import com.example.restaurantflk.features.home.domain.isOpened
@@ -67,6 +70,7 @@ fun HomeScreen(
     val currentRoute = navController.currentBackStackEntryAsState()
 
     val viewModel = koinViewModel<HomeViewModel>()
+    val isAdmin by viewModel.isAdmin.collectAsState()
     val context = LocalContext.current
 
     val selectedDestination by remember {
@@ -107,7 +111,7 @@ fun HomeScreen(
     ){
         CustomDrawer(
             onProfileClick = navigateToProfile,
-            onContactUsClick = {  },
+            onContactUsClick = { },
             onSignOutClick = {
                 viewModel.signOut(
                     onSuccess = navigateToAuth,
@@ -120,7 +124,8 @@ fun HomeScreen(
                     }
                 )
             },
-            onAdminPanelClick = navigateToAdminPanel
+            onAdminPanelClick = navigateToAdminPanel,
+            isAdmin = isAdmin
         )
         Box(
             modifier = Modifier
@@ -194,10 +199,28 @@ fun HomeScreen(
                         navController = navController,
                         startDestination = Screens.ProductOverviewScreen
                     ){
-                        composable<Screens.ProductOverviewScreen>{}
-                        composable<Screens.Cart>{}
-                        composable<Screens.Notifications>{}
-                        composable<Screens.Categories>{}
+                        composable<Screens.ProductOverviewScreen>{
+                            ProductOverviewScreen(
+                                onProductClick = { productId ->
+
+                                }
+                            )
+                        }
+                        composable<Screens.Cart>{
+                            Box(modifier = Modifier.fillMaxSize()){
+                                Text(text = "Cart Screen", modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
+                            }
+                        }
+                        composable<Screens.Notifications>{
+                            Box(modifier = Modifier.fillMaxSize()){
+                                Text(text = "Notifications Screen", modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
+                            }
+                        }
+                        composable<Screens.Categories>{
+                            Box(modifier = Modifier.fillMaxSize()){
+                                Text(text = "Categories Screen", modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
+                            }
+                        }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Box(
@@ -224,6 +247,6 @@ fun HomeScreen(
     }
 
 fun getScreenWidth(): Float{
-    return android.content.res.Resources.getSystem().displayMetrics.widthPixels /
-            android.content.res.Resources.getSystem().displayMetrics.density
+    return Resources.getSystem().displayMetrics.widthPixels /
+            Resources.getSystem().displayMetrics.density
 }
