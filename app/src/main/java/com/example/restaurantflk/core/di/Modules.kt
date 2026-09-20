@@ -16,6 +16,7 @@ import com.example.restaurantflk.features.admin_panel.manage_product.ManageProdu
 import com.example.restaurantflk.features.auth.AuthViewModel
 import com.example.restaurantflk.features.home.HomeViewModel
 import com.example.restaurantflk.features.home.product_overview.ProductOverviewViewModel
+import com.example.restaurantflk.features.product_details.ProductDetailsViewModel
 import com.example.restaurantflk.features.profile.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.serialization.json.Json
@@ -62,7 +63,9 @@ val appModule = module {
     viewModel { ProfileViewModel(get(), get()) }
     viewModel { ManageProductViewModel(get(), get())}
     viewModel { AdminPanelViewModel(get()) }
-    viewModel{ ProductOverviewViewModel(get()) }
+    viewModel{ ProductOverviewViewModel(get(), get()) }
+    viewModel{ ProductDetailsViewModel(get() , get(), get()) }
+
 
     single{
         GoogleUIClient(

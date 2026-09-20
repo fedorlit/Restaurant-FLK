@@ -45,4 +45,12 @@ class HomeViewModel(
             }
         }
     }
+
+    val cartBudgeCount: StateFlow<RequestState<Int>> =
+        customerRepository.readBadgeCountFlow()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = RequestState.Loading
+            )
 }

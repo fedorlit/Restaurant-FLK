@@ -1,13 +1,10 @@
 package com.example.restaurantflk.features.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -18,12 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -36,7 +31,6 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.example.restaurantflk.core.data.models.Product
-import com.example.restaurantflk.features.util.Alpha
 import com.example.restaurantflk.ui.theme.BorderIdle
 import com.example.restaurantflk.ui.theme.FontSize
 import com.example.restaurantflk.ui.theme.Resources
@@ -46,17 +40,14 @@ import com.example.restaurantflk.ui.theme.TextSecondary
 import com.example.restaurantflk.ui.theme.oswaldVariableFont
 
 @Composable
-fun ProductCard(
+fun CartProductCard(
     modifier: Modifier = Modifier,
     product: Product,
-    onClick: (String) -> Unit,
-    showFavouriteIcon: Boolean = false,
-    isFavourite: Boolean = false,
-    onToggleFavourite: ((String) -> Unit)? = null
+    onClick: (String) -> Unit
 ) {
     Row(
         modifier = modifier.fillMaxWidth()
-            .height(160.dp)
+            .height(100.dp)
             .clip(RoundedCornerShape(12.dp))
             .border(
                 width = 1.dp,
@@ -66,6 +57,23 @@ fun ProductCard(
             .background(SurfaceLighter)
             .clickable{onClick(product.id)}
     ) {
+        AsyncImage(
+            modifier = Modifier
+                .width(80.dp)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(12.dp))
+                .border(
+                    width = 1.dp,
+                    color = BorderIdle,
+                    shape = RoundedCornerShape(12.dp)
+                ),
+            model = ImageRequest.Builder(LocalPlatformContext.current)
+                .data(product.productImage)
+                .crossfade(enable = true)
+                .build(),
+            contentDescription = "Product image",
+            contentScale = ContentScale.Crop
+        )
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -82,19 +90,6 @@ fun ProductCard(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(Alpha.HALF),
-                text = product.description,
-                fontSize = FontSize.REGULAR,
-                color = TextPrimary,
-                fontFamily = oswaldVariableFont(),
-                fontWeight = FontWeight.Normal,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -123,44 +118,6 @@ fun ProductCard(
                         fontSize = FontSize.SMALL,
                         color = TextPrimary,
                         fontFamily = oswaldVariableFont()
-                    )
-                }
-            }
-        }
-        Box{
-            AsyncImage(
-                modifier = Modifier
-                    .width(140.dp)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(12.dp))
-                    .border(
-                        width = 1.dp,
-                        color = BorderIdle,
-                        shape = RoundedCornerShape(12.dp)
-                    ),
-                model = ImageRequest.Builder(LocalPlatformContext.current)
-                    .data(product.productImage)
-                    .crossfade(enable = true)
-                    .build(),
-                contentDescription = "Product image",
-                contentScale = ContentScale.Crop
-            )
-            if (showFavouriteIcon){
-                OutlinedIconButton(
-                    onClick = { onToggleFavourite?.invoke(product.id) },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(12.dp)
-                        .size(36.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, BorderIdle)
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if(isFavourite) Resources.Icon.Filled_heart else Resources.Icon.Heart
-                        ),
-                        contentDescription = "Heart icon",
-                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

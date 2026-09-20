@@ -64,8 +64,9 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(
     navigateToAuth: () -> Unit,
     navigateToProfile: () -> Unit,
-    navigateToAdminPanel: () -> Unit
-){
+    navigateToAdminPanel: () -> Unit,
+    navigateToDetails: (String) -> Unit
+) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState()
 
@@ -73,10 +74,13 @@ fun HomeScreen(
     val isAdmin by viewModel.isAdmin.collectAsState()
     val context = LocalContext.current
 
+    val cartBadgeState by viewModel.cartBudgeCount.collectAsState()
+    val cartCount = cartBadgeState.getSuccessDataOrNull() ?: 0
+
     val selectedDestination by remember {
         derivedStateOf {
             val route = currentRoute.value?.destination?.route.toString()
-            when{
+            when {
                 route.contains(BottomBarDestinations.ProductOverviewScreen.screen.toString()) -> BottomBarDestinations.ProductOverviewScreen
                 route.contains(BottomBarDestinations.CartScreen.screen.toString()) -> BottomBarDestinations.CartScreen
                 route.contains(BottomBarDestinations.NotificationsScreen.screen.toString()) -> BottomBarDestinations.NotificationsScreen
@@ -89,7 +93,7 @@ fun HomeScreen(
     val screenWidth = remember { getScreenWidth() }
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
 
-    val offsetValue by remember { derivedStateOf { (screenWidth/1.9).dp} }
+    val offsetValue by remember { derivedStateOf { (screenWidth / 1.9).dp } }
     val animatedOffset by animateDpAsState(
         targetValue = if (drawerState.isOpened()) offsetValue else 0.dp
     )
@@ -108,7 +112,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(animatedBackground)
             .systemBarsPadding()
-    ){
+    ) {
         CustomDrawer(
             onProfileClick = navigateToProfile,
             onContactUsClick = { },
@@ -139,7 +143,7 @@ fun HomeScreen(
                     ambientColor = Color.Black.copy(0.6f),
                     spotColor = Color.Black.copy(0.6f)
                 )
-        ){
+        ) {
             Scaffold(
                 containerColor = Surface,
                 topBar = {
@@ -159,17 +163,17 @@ fun HomeScreen(
                         navigationIcon = {
                             IconButton(
                                 onClick = { drawerState = drawerState.reverse() }
-                            ){
+                            ) {
                                 AnimatedContent(
                                     targetState = drawerState
                                 ) { drawer ->
-                                    if (!drawer.isOpened()){
+                                    if (!drawer.isOpened()) {
                                         Icon(
                                             painter = painterResource(R.drawable.menu),
                                             contentDescription = "Menu icon",
                                             tint = IconPrimary
                                         )
-                                    } else{
+                                    } else {
                                         Icon(
                                             painter = painterResource(R.drawable.close),
                                             contentDescription = "Close icon",
@@ -188,65 +192,73 @@ fun HomeScreen(
                         )
                     )
                 }
-            ) {paddingValues ->
+            ) { paddingValues ->
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
-                ){
+                ) {
                     NavHost(
                         modifier = Modifier.weight(1f),
                         navController = navController,
                         startDestination = Screens.ProductOverviewScreen
-                    ){
-                        composable<Screens.ProductOverviewScreen>{
+                    ) {
+                        composable<Screens.ProductOverviewScreen> {
                             ProductOverviewScreen(
-                                onProductClick = { productId ->
-
-                                }
+                                onProductClick = navigateToDetails
                             )
                         }
-                        composable<Screens.Cart>{
-                            Box(modifier = Modifier.fillMaxSize()){
-                                Text(text = "Cart Screen", modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
+                        composable<Screens.Cart> {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = "Cart Screen",
+                                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center)
+                                )
                             }
                         }
-                        composable<Screens.Notifications>{
-                            Box(modifier = Modifier.fillMaxSize()){
-                                Text(text = "Notifications Screen", modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
+                        composable<Screens.Notifications> {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = "Notifications Screen",
+                                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center)
+                                )
                             }
                         }
-                        composable<Screens.Categories>{
-                            Box(modifier = Modifier.fillMaxSize()){
-                                Text(text = "Categories Screen", modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
+                        composable<Screens.Categories> {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = "Categories Screen",
+                                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center)
+                                )
                             }
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Box(
                         modifier = Modifier.padding(12.dp)
-                    ){
+                    ) {
                         BottomBar(
                             selected = selectedDestination,
                             onSelect = { destinations ->
-                                navController.navigate(destinations.screen){
+                                navController.navigate(destinations.screen) {
                                     launchSingleTop = true
-                                    popUpTo<Screens.ProductOverviewScreen>{
+                                    popUpTo<Screens.ProductOverviewScreen> {
                                         saveState = true
                                         inclusive = false
                                     }
                                     restoreState = true
                                 }
-                            }
+                            },
+                            cartCount = cartCount
                         )
                     }
                 }
             }
         }
-        }
     }
+}
 
-fun getScreenWidth(): Float{
+fun getScreenWidth(): Float {
     return Resources.getSystem().displayMetrics.widthPixels /
             Resources.getSystem().displayMetrics.density
 }

@@ -2,6 +2,7 @@ package com.example.restaurantflk.features.home.product_overview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.restaurantflk.core.data.domain.CustomerRepository
 import com.example.restaurantflk.core.data.domain.ProductRepository
 import com.example.restaurantflk.core.data.models.Product
 import com.example.restaurantflk.core.data.models.ProductCategory
@@ -23,7 +24,8 @@ import kotlinx.coroutines.launch
 import java.util.Collections.list
 
 class ProductOverviewViewModel(
-    private val productRepository: ProductRepository
+    private val productRepository: ProductRepository,
+    private val customerRepository: CustomerRepository
 ): ViewModel() {
     val newProducts = productRepository.readNewProducts()
         .stateIn(
@@ -112,5 +114,18 @@ class ProductOverviewViewModel(
     }
     fun clearCategory(){
         _selectedCategory.value = null
+    }
+    val favouriteIds: StateFlow<RequestState<Set<String>>> =
+        customerRepository.readFavouriteIdFlow()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = RequestState.Loading
+            )
+    fun toggleFavourite(productId: String){
+        if(productId.isBlank()) return
+        viewModelScope.launch {
+            customerRepository.toggleFavourite(productId)
+        }
     }
 }

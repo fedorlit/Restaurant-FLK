@@ -106,4 +106,24 @@ class ProductRepoImpl : ProductRepository {
             send(RequestState.Error("Error al leer la categoría de producto: ${e.message}"))
         }
     }
+
+    override fun readProductById(productId: String): Flow<RequestState<Product>> =channelFlow{
+        try {
+            send(RequestState.Loading)
+            Firebase.firestore.collection("products")
+                .document(productId)
+                .snapshots()
+                .collectLatest { snapshots ->
+                    if(!snapshots.exists()){
+                        send(RequestState.Error("Producto no encontrado"))
+                        return@collectLatest
+                    }
+                    val products = snapshots.toProduct()
+                        .copy(title = snapshots.getString("title").orEmpty().uppercase())
+                    send(RequestState.Success(products))
+                }
+        }catch (e: Exception){
+            send(RequestState.Error("Error al leer los detalles del producto: ${e.message}"))
+        }
+    }
 }

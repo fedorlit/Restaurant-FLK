@@ -10,8 +10,10 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -52,6 +54,9 @@ fun ProductOverviewScreen(
     val categoryProducts by viewModel.categoryProduct.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
 
+    val favouriteIdsState by viewModel.favouriteIds.collectAsState()
+    val favouriteIds = favouriteIdsState.getSuccessDataOrNull().orEmpty()
+
     BackHandler(enabled = selectedCategory!=null){
         viewModel.clearCategory()
     }
@@ -77,7 +82,8 @@ fun ProductOverviewScreen(
                         energyValue = "${product.energyValue ?: 0} kcal",
                         price = "${"%.2f".format(product.price)}€",
                         imageUrl = product.productImage,
-                        paused =heroPaused
+                        paused =heroPaused,
+                        onClick = { onProductClick(product.id) }
                     )
                 }?: LoadingCard(modifier = Modifier.fillMaxSize())
             }
@@ -85,7 +91,10 @@ fun ProductOverviewScreen(
 
         // Category row
 
-        item { SectionHeader(title = "Nuestro Menú") }
+        item { SectionHeader(title = "Nuestro Menú")
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         item {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -163,7 +172,10 @@ fun ProductOverviewScreen(
                                 products.forEach { product ->
                                     ProductCard(
                                         product = product,
-                                        onClick = onProductClick
+                                        onClick = onProductClick,
+                                        showFavouriteIcon = true,
+                                        isFavourite = favouriteIds.contains(product.id),
+                                        onToggleFavourite = viewModel::toggleFavourite
                                     )
                                 }
                             }
@@ -197,7 +209,10 @@ fun ProductOverviewScreen(
                                 products.forEach { product ->
                                     ProductCard(
                                         product = product,
-                                        onClick = onProductClick
+                                        onClick = onProductClick,
+                                        showFavouriteIcon = true,
+                                        isFavourite = favouriteIds.contains(product.id),
+                                        onToggleFavourite = viewModel::toggleFavourite
                                     )
                                 }
                             }

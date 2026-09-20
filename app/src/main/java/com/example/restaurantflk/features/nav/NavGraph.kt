@@ -10,6 +10,7 @@ import com.example.restaurantflk.features.admin_panel.manage_product.ManageProdu
 import com.example.restaurantflk.features.splash.SplashScreen
 import com.example.restaurantflk.features.auth.AuthScreen
 import com.example.restaurantflk.features.home.HomeScreen
+import com.example.restaurantflk.features.product_details.ProductDetailsScreen
 import com.example.restaurantflk.features.profile.ProfileScreen
 
 @Composable
@@ -65,6 +66,9 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                 },
                 navigateToAdminPanel = {
                     navController.navigate(Screens.AdminPanel)
+                },
+                navigateToDetails = { productId ->
+                    navController.navigate(Screens.DetailsScreen(id = productId))
                 }
             )
         }
@@ -97,6 +101,13 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                 }
             )
         }
-        
+
+        composable<Screens.DetailsScreen> {
+            ProductDetailsScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                }
+            )
+        }
     }
 }

@@ -41,6 +41,8 @@ object Resources {
         val Drinks = R.drawable.drinks
 
         val Fire = R.drawable.fuego
+
+        val Filled_heart = R.drawable.heart_filled
     }
     object Image {
         val ShoppingCart = R.drawable.shopping_cart_image
