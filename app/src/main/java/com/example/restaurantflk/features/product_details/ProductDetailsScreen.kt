@@ -65,6 +65,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun ProductDetailsScreen(
     navigateBack: () -> Unit,
+    navigateToCart: (Double) -> Unit
 ) {
     val viewModel = koinViewModel<ProductDetailsViewModel>()
     val productState by viewModel.product.collectAsState()
@@ -74,17 +75,15 @@ fun ProductDetailsScreen(
     if (uiState.showSuggestedDialog) {
         AddMoreToCartDialog(
             suggestedProducts = uiState.suggestedProducts,
-            addedIds = uiState.addedSuggestedIds,
-            totalPrice = uiState.addedCartTotal,
+            initialItemTotal = uiState.addedCartTotal,
             onDismiss = viewModel::dismissSuggestedDialog,
             onProductClick = {},
-            onAddChecked = { product ->
-                viewModel.addSuggestedToCart(product, quantityToAdd = 1)
-            },
-            onRemoveChecked = { product ->
-                viewModel.removeSuggestedFromCart(product, quantityToRemove = 1)
-            },
-            onCheckout = {}
+            selectedQuantities = uiState.suggestedQuantities,
+            onIncrement = viewModel::incrementSuggested,
+            onDecrement = viewModel::decrementSuggested,
+            onCheckout = {
+                viewModel.confirmSuggestedSelectionToCart(onDone = { navigateToCart(0.0) })
+            }
         )
     }
 

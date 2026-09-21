@@ -8,22 +8,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,6 +27,7 @@ import com.example.restaurantflk.core.data.models.Product
 import com.example.restaurantflk.features.components.CartProductCard
 import com.example.restaurantflk.features.components.InfoCard
 import com.example.restaurantflk.features.components.LoadingCard
+import com.example.restaurantflk.features.components.QuantityStepper
 import com.example.restaurantflk.features.util.Alpha
 import com.example.restaurantflk.features.util.DisplayResult
 import com.example.restaurantflk.features.util.RequestState
@@ -45,14 +42,17 @@ import com.example.restaurantflk.ui.theme.oswaldVariableFont
 @Composable
 fun AddMoreToCartDialog(
     suggestedProducts: RequestState<List<Product>>,
-    addedIds: Set<String>,
-    totalPrice: Double,
+    selectedQuantities: Map<String, Int>,
+    initialItemTotal: Double,
     onDismiss: () -> Unit,
     onProductClick: (String) -> Unit,
-    onAddChecked: (Product) -> Unit,
-    onRemoveChecked: (Product) -> Unit,
+    onIncrement: (String) -> Unit,
+    onDecrement: (String) -> Unit,
     onCheckout: () -> Unit
 ){
+    val products = (suggestedProducts as? RequestState.Success)?.data.orEmpty()
+    val total = products.sumOf { product -> (selectedQuantities[product.id] ?: 0) * product.price }
+    val grandTotal = initialItemTotal + total
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Surface,
@@ -87,29 +87,20 @@ fun AddMoreToCartDialog(
                 onSuccess = { products ->
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         products.take(10).forEach { product ->
-                            val checked = addedIds.contains(product.id)
+                            val qty = selectedQuantities[product.id] ?: 0
 
                             Box(modifier = Modifier.fillMaxWidth()){
                                 CartProductCard(
                                     product = product,
-                                    onClick = onProductClick
-                                )
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = { nowChecked ->
-                                        when{
-                                            nowChecked && !checked ->{
-                                                onAddChecked(product)
-                                            }
-                                            !nowChecked && checked -> {
-                                                onRemoveChecked(product)
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .align(Alignment.BottomEnd)
-                                        .padding(end = 6.dp)
-                                        .clip(RoundedCornerShape(12.dp))
+                                    onClick = onProductClick,
+                                    trailingContent = {
+                                        QuantityStepper(
+                                            quantity = qty,
+                                            minValue = 0,
+                                            onMinusClick = { onDecrement(product.id) },
+                                            onPlusClick = { onIncrement(product.id) }
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -126,7 +117,7 @@ fun AddMoreToCartDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = BrandYellow)
             ){
                 Text(
-                    text = "Checkout (${"%.2f".format(totalPrice)}€)",
+                    text = "Checkout (${"%.2f".format(grandTotal)}€)",
                     fontSize = FontSize.REGULAR,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary

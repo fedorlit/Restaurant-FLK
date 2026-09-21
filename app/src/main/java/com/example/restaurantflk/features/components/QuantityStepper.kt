@@ -20,11 +20,16 @@ import com.example.restaurantflk.ui.theme.FontSize
 fun QuantityStepper(
     quantity: Int,
     onMinusClick: () -> Unit,
-    onPlusClick: () -> Unit
+    onPlusClick: () -> Unit,
+    minValue: Int = 0,
+    maxValue: Int = 99
 ) {
+    val counterDecr = quantity > minValue
+    val counterIncr = quantity < maxValue
     Row(verticalAlignment = Alignment.CenterVertically) {
         StepperButton(
             text = "-",
+            enabled = counterDecr,
             onClick = onMinusClick
         )
         Text(
@@ -35,6 +40,7 @@ fun QuantityStepper(
         )
         StepperButton(
             text = "+",
+            enabled = counterIncr,
             onClick = onPlusClick
         )
     }
@@ -43,10 +49,12 @@ fun QuantityStepper(
 @Composable
 private fun StepperButton(
     text: String,
+    enabled : Boolean,
     onClick: () -> Unit
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         contentPadding = PaddingValues(0.dp),
         modifier = Modifier.size(24.dp),
         shape = RoundedCornerShape(6.dp),

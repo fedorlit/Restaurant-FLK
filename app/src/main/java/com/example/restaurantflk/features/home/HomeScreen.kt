@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.restaurantflk.R
+import com.example.restaurantflk.features.home.cart.CartScreen
 import com.example.restaurantflk.features.home.component.BottomBar
 import com.example.restaurantflk.features.home.component.CustomDrawer
 import com.example.restaurantflk.features.home.product_overview.ProductOverviewScreen
@@ -50,6 +52,7 @@ import com.example.restaurantflk.features.home.domain.BottomBarDestinations
 import com.example.restaurantflk.features.home.domain.CustomDrawerState
 import com.example.restaurantflk.features.home.domain.isOpened
 import com.example.restaurantflk.features.home.domain.reverse
+import com.example.restaurantflk.features.nav.HomeTab
 import com.example.restaurantflk.features.nav.Screens
 import com.example.restaurantflk.ui.theme.BrandBrown
 import com.example.restaurantflk.ui.theme.FontSize
@@ -62,10 +65,13 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    startTab: HomeTab = HomeTab.Products,
     navigateToAuth: () -> Unit,
     navigateToProfile: () -> Unit,
     navigateToAdminPanel: () -> Unit,
-    navigateToDetails: (String) -> Unit
+    navigateToDetails: (String) -> Unit,
+    navigateToCheckout: (Double) -> Unit,
+    navigateToMenu: () -> Unit
 ) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState()
@@ -86,6 +92,31 @@ fun HomeScreen(
                 route.contains(BottomBarDestinations.NotificationsScreen.screen.toString()) -> BottomBarDestinations.NotificationsScreen
                 route.contains(BottomBarDestinations.CategoriesScreen.screen.toString()) -> BottomBarDestinations.CategoriesScreen
                 else -> BottomBarDestinations.ProductOverviewScreen
+            }
+        }
+    }
+
+    val startDestination = remember(startTab){
+        when(startTab){
+            HomeTab.Products -> Screens.ProductOverviewScreen
+            HomeTab.Cart -> Screens.Cart
+            HomeTab.Notifications -> Screens.Notifications
+            HomeTab.Categories -> Screens.Categories
+        }
+    }
+
+    LaunchedEffect(startTab) {
+        val destinations = when(startTab){
+            HomeTab.Products -> Screens.ProductOverviewScreen
+            HomeTab.Cart -> Screens.Cart
+            HomeTab.Notifications -> Screens.Notifications
+            HomeTab.Categories -> Screens.Categories
+        }
+        navController.navigate(destinations){
+            launchSingleTop = true
+            restoreState = true
+            popUpTo<Screens.ProductOverviewScreen> {
+                saveState = true
             }
         }
     }
@@ -201,7 +232,7 @@ fun HomeScreen(
                     NavHost(
                         modifier = Modifier.weight(1f),
                         navController = navController,
-                        startDestination = Screens.ProductOverviewScreen
+                        startDestination = startDestination
                     ) {
                         composable<Screens.ProductOverviewScreen> {
                             ProductOverviewScreen(
@@ -209,12 +240,10 @@ fun HomeScreen(
                             )
                         }
                         composable<Screens.Cart> {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Text(
-                                    text = "Cart Screen",
-                                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center)
-                                )
-                            }
+                            CartScreen(
+                                navigateToCheckout = navigateToCheckout,
+                                navigateToMenu = navigateToMenu
+                            )
                         }
                         composable<Screens.Notifications> {
                             Box(modifier = Modifier.fillMaxSize()) {

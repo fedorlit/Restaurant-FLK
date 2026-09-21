@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,7 +44,8 @@ import com.example.restaurantflk.ui.theme.oswaldVariableFont
 fun CartProductCard(
     modifier: Modifier = Modifier,
     product: Product,
-    onClick: (String) -> Unit
+    onClick: (String) -> Unit,
+    trailingContent: (@Composable RowScope.() -> Unit)? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth()
@@ -120,6 +122,18 @@ fun CartProductCard(
                         fontFamily = oswaldVariableFont()
                     )
                 }
+            }
+            if(trailingContent != null){
+                Spacer(modifier = Modifier.width(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth()
+                        .padding(end = 4.dp),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.End,
+                    content = trailingContent
+                )
             }
         }
     }

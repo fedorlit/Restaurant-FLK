@@ -3,18 +3,21 @@ package com.example.restaurantflk.core.di
 import com.example.restaurantflk.R
 import com.example.restaurantflk.core.data.auth.GoogleUIClient
 import com.example.restaurantflk.core.data.domain.AdminRepository
+import com.example.restaurantflk.core.data.domain.CartRepository
 import com.example.restaurantflk.core.data.domain.CountryRepository
 import com.example.restaurantflk.core.data.domain.CountryRepositoryImpl
 import com.example.restaurantflk.core.data.domain.CustomerRepository
 import com.example.restaurantflk.core.data.domain.ProductRepository
 import com.example.restaurantflk.core.data.remote.RestCountriesApi
 import com.example.restaurantflk.core.data.repoimpl.AdminRepoImpl
+import com.example.restaurantflk.core.data.repoimpl.CartRepoImpl
 import com.example.restaurantflk.core.data.repoimpl.CustomerRepoImpl
 import com.example.restaurantflk.core.data.repoimpl.ProductRepoImpl
 import com.example.restaurantflk.features.admin_panel.AdminPanelViewModel
 import com.example.restaurantflk.features.admin_panel.manage_product.ManageProductViewModel
 import com.example.restaurantflk.features.auth.AuthViewModel
 import com.example.restaurantflk.features.home.HomeViewModel
+import com.example.restaurantflk.features.home.cart.CartViewModel
 import com.example.restaurantflk.features.home.product_overview.ProductOverviewViewModel
 import com.example.restaurantflk.features.product_details.ProductDetailsViewModel
 import com.example.restaurantflk.features.profile.ProfileViewModel
@@ -57,6 +60,7 @@ val appModule = module {
     single<CustomerRepository>{ CustomerRepoImpl() }
     single<AdminRepository>{ AdminRepoImpl() }
     single<ProductRepository>{ ProductRepoImpl() }
+    single<CartRepository>{ CartRepoImpl(get(), get()) }
 
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
@@ -65,7 +69,7 @@ val appModule = module {
     viewModel { AdminPanelViewModel(get()) }
     viewModel{ ProductOverviewViewModel(get(), get()) }
     viewModel{ ProductDetailsViewModel(get() , get(), get()) }
-
+    viewModel{ CartViewModel(get()) }
 
     single{
         GoogleUIClient(

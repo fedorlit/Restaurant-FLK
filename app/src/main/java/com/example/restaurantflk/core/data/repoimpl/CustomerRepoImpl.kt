@@ -11,9 +11,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.snapshots
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.tasks.await
@@ -369,18 +372,83 @@ class CustomerRepoImpl : CustomerRepository {
         }
     }
 
-    override fun readCartFlow(): Flow<RequestState<List<Cart>>> {
-        TODO("Not yet implemented")
+    override fun readCartFlow(): Flow<RequestState<List<Cart>>> = callbackFlow{
+        val uid = getCurrentUserId()
+        if (uid == null){
+            trySend(RequestState.Error("Usuario no disponible"))
+            close()
+            return@callbackFlow
+        }
+
+        trySend(RequestState.Loading)
+        val listener = Firebase.firestore
+            .collection(CUSTOMER_COLLECTION)
+            .document(uid)
+            .collection(CART_SUBCOLLECTION)
+            .addSnapshotListener { snapshot, error ->
+                if(error != null){
+                    trySend(RequestState.Error(error.message ?: "Error al leer el carrito"))
+                    return@addSnapshotListener
+                }
+                val docs = snapshot?.documents.orEmpty()
+                val cart = docs.mapNotNull { documentSnapshot ->
+                    val productId = documentSnapshot.getString("productId") ?: documentSnapshot.id
+                    val quantity = (documentSnapshot.getLong("quantity") ?: 0L).toInt()
+                    if (quantity<=0) null else Cart(productId= productId, quantity= quantity)
+                }
+                trySend(RequestState.Success(cart))
+            }
+        awaitClose { listener.remove() }
     }
 
-    override suspend fun deleteCartItem(productId: String): RequestState<Unit> {
-        TODO("Not yet implemented")
+    override suspend fun deleteCartItem(productId: String): RequestState<Unit>{
+        return try {
+            val uid = getCurrentUserId() ?: return RequestState.Error("Usuario no disponible")
+            if (productId.isBlank()) return RequestState.Error("ID de producto no válido")
+
+            Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(CART_SUBCOLLECTION)
+                .document(productId)
+                .delete()
+                .await()
+            RequestState.Success(Unit)
+        }catch (e: Exception){
+            RequestState.Error("Error eliminando item del carrito: ${e.message}")
+        }
     }
 
     override suspend fun setCartQuantity(
         productId: String,
         newQuantity: Int
     ): RequestState<Unit> {
-        TODO("Not yet implemented")
+        return try {
+            val uid = getCurrentUserId() ?: return RequestState.Error("Usuario no disponible")
+            if (productId.isBlank()) return RequestState.Error("ID de producto no válido")
+
+            val cartQuantity = newQuantity.coerceIn(0, 99)
+            val cartDoc = Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(CART_SUBCOLLECTION)
+                .document(productId)
+
+            if(cartQuantity == 0){
+                cartDoc.delete()
+            }else{
+                cartDoc.set(
+                    mapOf(
+                        "productId" to productId,
+                        "quantity" to cartQuantity,
+                        "updatedAt" to FieldValue.serverTimestamp()
+                    ),
+                    SetOptions.merge()
+                ).await()
+            }
+            RequestState.Success(Unit)
+        }catch (e: Exception){
+            RequestState.Error("Error actualizando item del carrito: ${e.message}")
+        }
     }
 }

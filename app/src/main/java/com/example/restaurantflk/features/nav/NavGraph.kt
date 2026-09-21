@@ -1,6 +1,9 @@
 package com.example.restaurantflk.features.nav
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -12,6 +15,14 @@ import com.example.restaurantflk.features.auth.AuthScreen
 import com.example.restaurantflk.features.home.HomeScreen
 import com.example.restaurantflk.features.product_details.ProductDetailsScreen
 import com.example.restaurantflk.features.profile.ProfileScreen
+
+const val HOME_TAB_KEY = "HOME_TAB_KEY"
+private fun NavController.setHomeTab(tab:HomeTab){
+    try {
+        val homeEntry = getBackStackEntry<Screens.HomeGraph>()
+        homeEntry.savedStateHandle[HOME_TAB_KEY] = tab
+    }catch (e: IllegalArgumentException){}
+}
 
 @Composable
 fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
@@ -31,7 +42,7 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                     }
                 },
                 navigateToHome = {
-                    navController.navigate(Screens.HomeGraph){
+                    navController.navigate(Screens.HomeGraph()){
                         popUpTo<Screens.SplashScreen>{
                             inclusive = true
                         }
@@ -52,8 +63,13 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
             )
         }
 
-        composable<Screens.HomeGraph>{
+        composable<Screens.HomeGraph>{ entry ->
+            val args = entry.toRoute<Screens.HomeGraph>()
+            val requestedTabFlow = entry.savedStateHandle.getStateFlow(HOME_TAB_KEY,args.start)
+            val requestStateTab by requestedTabFlow.collectAsState()
+
             HomeScreen(
+                startTab = requestStateTab,
                 navigateToAuth = {
                     navController.navigate(Screens.AuthScreen){
                         popUpTo(Screens.HomeGraph){
@@ -69,7 +85,11 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                 },
                 navigateToDetails = { productId ->
                     navController.navigate(Screens.DetailsScreen(id = productId))
-                }
+                },
+                navigateToCheckout = {amount ->
+                    navController.navigate(Screens.CartScreen(amount = amount))
+                },
+                navigateToMenu = {}
             )
         }
 
@@ -106,6 +126,10 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
             ProductDetailsScreen(
                 navigateBack = {
                     navController.navigateUp()
+                },
+                navigateToCart = {
+                    navController.setHomeTab(HomeTab.Cart)
+                    navController.popBackStack()
                 }
             )
         }

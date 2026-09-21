@@ -27,7 +27,8 @@ data class ProductDetailsUiState(
     val actionMessage: String? = null,
     val favouriteIds: Set<String> = emptySet(),
     val addedCartTotal: Double = 0.0,
-    val addedSuggestedIds: Set<String> = emptySet()
+    val addedSuggestedIds: Set<String> = emptySet(),
+    val suggestedQuantities: Map<String, Int> = emptyMap()
 )
 
 class ProductDetailsViewModel(
@@ -122,6 +123,29 @@ class ProductDetailsViewModel(
         _quantity.update { current -> (current - 1).coerceAtLeast(1) }
     }
 
+    fun incrementSuggested(productId: String) {
+        _baseUiState.update { state ->
+            val current = state.suggestedQuantities[productId] ?: 0
+            state.copy(
+                suggestedQuantities = state.suggestedQuantities + (productId to (current + 1)
+                    .coerceAtMost(99))
+
+            )
+
+        }
+    }
+
+    fun decrementSuggested(productId: String) {
+        _baseUiState.update { state ->
+            val current = state.suggestedQuantities[productId] ?: 0
+            val next = (current - 1).coerceAtLeast(0)
+            val updatedMap =
+                if (next == 0) state.suggestedQuantities - productId
+                else state.suggestedQuantities + (productId to next)
+            state.copy(suggestedQuantities = updatedMap)
+        }
+    }
+
     fun addToCart() {
         val qty = _quantity.value
         val products = product.value.getSuccessDataOrNull() ?: return
@@ -156,46 +180,61 @@ class ProductDetailsViewModel(
         }
 
     }
-    fun addSuggestedToCart(product: Product, quantityToAdd: Int = 1){
-        if(_baseUiState.value.addedSuggestedIds.contains(product.id)) return
+
+    fun confirmSuggestedSelectionToCart(onDone:() -> Unit) {
+        val state = _baseUiState.value
+        val selected = state.suggestedQuantities.filterValues { it > 0 }
+        if (selected.isEmpty()){
+            _baseUiState.update {
+                it.copy(
+                    suggestedQuantities = emptyMap(),
+                    showSuggestedDialog = false,
+                    actionMessage = null
+                )
+            }
+            onDone()
+            return
+        }
+        val products = (suggestedProducts.value as? RequestState.Success)?.data.orEmpty()
+        val productById = products.associateBy { it.id }
 
         viewModelScope.launch {
-            when(
-                customerRepository.addToCart(
+            _baseUiState.update { it.copy(actionMessage = null) }
+            val errors = mutableListOf<String>()
+
+            selected.forEach { (productId, quantity) ->
+                val product = productById[productId]
+
+                if (product == null){
+                    errors.add("No se ha podido encontrar el producto con id $productId")
+                    return@forEach
+                }
+                val result = customerRepository.addToCart(
                     productId = product.id,
                     productTitle = product.title,
-                    quantityToAdd = quantityToAdd
+                    quantityToAdd = quantity
                 )
-            ){
-                is RequestState.Success -> {
-                    _baseUiState.update { state ->
-                        state.copy(
-                            addedSuggestedIds = state.addedSuggestedIds + product.id,
-                            addedCartTotal = state.addedCartTotal + (product.price * quantityToAdd)
-                        )
-                    }
+                if (result is RequestState.Error){
+                    errors.add("Error añadiendo ${product.title} al carrito: ${result.message}")
                 }
-                else -> Unit
             }
-        }
-    }
 
-    fun removeSuggestedFromCart(product: Product, quantityToRemove: Int = 1){
-        val wasAddded = _baseUiState.value.addedSuggestedIds.contains(product.id)
-        if(!wasAddded) return
-
-        viewModelScope.launch {
-            when(customerRepository.removeFromCart(product.id, quantityToRemove)){
-                is RequestState.Success -> {
-                    _baseUiState.update { state ->
-                        state.copy(
-                            addedSuggestedIds = state.addedSuggestedIds - product.id,
-                            addedCartTotal = (state.addedCartTotal - (product.price * quantityToRemove))
-                                .coerceAtLeast(0.0)
-                        )
-                    }
+            if(errors.isNotEmpty()){
+                _baseUiState.update {
+                    it.copy(
+                        showSuggestedDialog = true,
+                        actionMessage = errors.joinToString("\n")
+                    )
                 }
-                else -> Unit
+            } else {
+                _baseUiState.update {
+                    it.copy(
+                        showSuggestedDialog = false,
+                        suggestedQuantities = emptyMap(),
+                        actionMessage = null
+                    )
+                }
+                onDone()
             }
         }
     }
