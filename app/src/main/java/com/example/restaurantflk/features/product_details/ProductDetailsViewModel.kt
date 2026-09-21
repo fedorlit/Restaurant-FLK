@@ -8,9 +8,11 @@ import com.example.restaurantflk.core.data.domain.ProductRepository
 import com.example.restaurantflk.core.data.models.Product
 import com.example.restaurantflk.features.util.RequestState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -31,6 +33,11 @@ data class ProductDetailsUiState(
     val suggestedQuantities: Map<String, Int> = emptyMap()
 )
 
+sealed interface ProductDetailsEvent{
+    data class NavigateToCheckout(val amount: Double?): ProductDetailsEvent
+    data class showMessage(val message: String): ProductDetailsEvent
+}
+
 class ProductDetailsViewModel(
     private val productRepository: ProductRepository,
     private val savedStateHandle: SavedStateHandle,
@@ -40,6 +47,10 @@ class ProductDetailsViewModel(
     //val uiState: StateFlow<ProductDetailsUiState> = _uiState.asStateFlow()
     private val _quantity = MutableStateFlow(1)
     val quantity: StateFlow<Int> = _quantity
+
+    private val _events = MutableSharedFlow<ProductDetailsEvent>(extraBufferCapacity = 1)
+    val events = _events.asSharedFlow()
+
 
     private val _suggestedEnabled = MutableStateFlow(false)
 
@@ -250,6 +261,21 @@ class ProductDetailsViewModel(
         _suggestedEnabled.value = false
     }
 
-    fun buyNow() {}
+    fun buyNow() {
+        val product = product.value.getSuccessDataOrNull()
+        if (product == null) {
+            _events.tryEmit(ProductDetailsEvent.showMessage("No se ha podido encontrar el producto"))
+        }
 
+        val qty = _quantity.value.coerceAtLeast(1)
+        val total = (product?.price?.times(qty))
+
+        if (total != null){
+            if (total <= 0.0){
+                _events.tryEmit(ProductDetailsEvent.showMessage("Subtotal inválido"))
+                return
+            }
+        }
+        _events.tryEmit(ProductDetailsEvent.NavigateToCheckout(total))
+    }
 }

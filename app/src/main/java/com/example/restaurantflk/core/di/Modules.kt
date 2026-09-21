@@ -18,6 +18,7 @@ import com.example.restaurantflk.features.admin_panel.manage_product.ManageProdu
 import com.example.restaurantflk.features.auth.AuthViewModel
 import com.example.restaurantflk.features.home.HomeViewModel
 import com.example.restaurantflk.features.home.cart.CartViewModel
+import com.example.restaurantflk.features.home.categories.FoodMenuViewModel
 import com.example.restaurantflk.features.home.product_overview.ProductOverviewViewModel
 import com.example.restaurantflk.features.product_details.ProductDetailsViewModel
 import com.example.restaurantflk.features.profile.ProfileViewModel
@@ -70,6 +71,7 @@ val appModule = module {
     viewModel{ ProductOverviewViewModel(get(), get()) }
     viewModel{ ProductDetailsViewModel(get() , get(), get()) }
     viewModel{ CartViewModel(get()) }
+    viewModel{ FoodMenuViewModel(get(),get(),get()) }
 
     single{
         GoogleUIClient(

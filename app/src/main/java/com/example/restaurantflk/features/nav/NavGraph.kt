@@ -13,6 +13,8 @@ import com.example.restaurantflk.features.admin_panel.manage_product.ManageProdu
 import com.example.restaurantflk.features.splash.SplashScreen
 import com.example.restaurantflk.features.auth.AuthScreen
 import com.example.restaurantflk.features.home.HomeScreen
+import com.example.restaurantflk.features.home.categories.CategoryProductScreen
+import com.example.restaurantflk.features.payment.CheckoutScreen
 import com.example.restaurantflk.features.product_details.ProductDetailsScreen
 import com.example.restaurantflk.features.profile.ProfileScreen
 
@@ -87,9 +89,14 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                     navController.navigate(Screens.DetailsScreen(id = productId))
                 },
                 navigateToCheckout = {amount ->
-                    navController.navigate(Screens.CartScreen(amount = amount))
+                    navController.navigate(Screens.Checkout(amount = amount))
                 },
-                navigateToMenu = {}
+                navigateToMenu = {
+                    navController.setHomeTab(HomeTab.Categories)
+                },
+                navigateToProductCategory = { categoryTitle ->
+                    navController.navigate(Screens.ProductCategoryScreen(category = categoryTitle))
+                }
             )
         }
 
@@ -130,6 +137,36 @@ fun NavGraph(startDestination: Screens = Screens.SplashScreen) {
                 navigateToCart = {
                     navController.setHomeTab(HomeTab.Cart)
                     navController.popBackStack()
+                },
+                navigateToCheckout = {amount ->
+                    navController.navigate(Screens.Checkout(amount = amount))
+                },
+                navigateToMenu = {
+                    navController.setHomeTab(HomeTab.Categories)
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable<Screens.Checkout> { navBackStackEntry ->
+            val checkoutArgs = navBackStackEntry.toRoute<Screens.Checkout>()
+            CheckoutScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                },
+                totalAmount = checkoutArgs.amount
+            )
+        }
+
+        composable<Screens.ProductCategoryScreen> { entry ->
+            val args = entry.toRoute<Screens.ProductCategoryScreen>()
+            CategoryProductScreen(
+                category = args.category,
+                onNavigateBack = {
+                    navController.setHomeTab(HomeTab.Categories)
+                    navController.popBackStack()
+                },
+                onProductClick = { productId ->
+                    navController.navigate(Screens.DetailsScreen(id = productId))
                 }
             )
         }

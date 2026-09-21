@@ -45,6 +45,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.restaurantflk.R
 import com.example.restaurantflk.features.home.cart.CartScreen
+import com.example.restaurantflk.features.home.categories.FoodMenuScreen
 import com.example.restaurantflk.features.home.component.BottomBar
 import com.example.restaurantflk.features.home.component.CustomDrawer
 import com.example.restaurantflk.features.home.product_overview.ProductOverviewScreen
@@ -71,7 +72,8 @@ fun HomeScreen(
     navigateToAdminPanel: () -> Unit,
     navigateToDetails: (String) -> Unit,
     navigateToCheckout: (Double) -> Unit,
-    navigateToMenu: () -> Unit
+    navigateToMenu: () -> Unit,
+    navigateToProductCategory: (String) -> Unit
 ) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState()
@@ -241,8 +243,18 @@ fun HomeScreen(
                         }
                         composable<Screens.Cart> {
                             CartScreen(
-                                navigateToCheckout = navigateToCheckout,
-                                navigateToMenu = navigateToMenu
+                                navigateToCheckout = { amount ->
+                                    navigateToCheckout(amount)
+                                },
+                                navigateToMenu = {
+                                    navController.navigate(Screens.Categories){
+                                        launchSingleTop = true
+                                        restoreState = true
+                                        popUpTo<Screens.Cart> {
+                                            saveState = true
+                                        }
+                                    }
+                                }
                             )
                         }
                         composable<Screens.Notifications> {
@@ -254,12 +266,11 @@ fun HomeScreen(
                             }
                         }
                         composable<Screens.Categories> {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Text(
-                                    text = "Categories Screen",
-                                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center)
-                                )
-                            }
+                            FoodMenuScreen(
+                                onCategoryClick = { category ->
+                                    navigateToProductCategory(category.title)
+                                }
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
